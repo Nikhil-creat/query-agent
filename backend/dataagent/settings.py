@@ -17,7 +17,14 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-secret-do-not-use-in-production")
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
-ALLOWED_HOSTS = ["*"]
+
+# Comma-separated in production, e.g. "data-chat-agent.onrender.com".
+# Defaults to "*" for local development only.
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+    if h.strip()
+] or ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
@@ -30,13 +37,18 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
-# The React dev server runs on a different port, so CORS must be opened
-# explicitly for local development.
+# The frontend runs on a different origin (localhost:5173 in dev, your
+# Vercel domain in production), so CORS must be opened explicitly.
+# Set CORS_ALLOWED_ORIGINS=https://your-app.vercel.app in production.
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    o.strip()
+    for o in os.environ.get(
+        "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if o.strip()
 ]
 
 ROOT_URLCONF = "dataagent.urls"
@@ -60,5 +72,11 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Kept for completeness; not used since there are no user-facing templates.
+# Kept mainly so DRF's browsable API renders with CSS in production too.
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}

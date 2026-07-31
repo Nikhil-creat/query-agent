@@ -4,4 +4,7 @@ django-cors-headers>=4.4
 pandas>=2.2
 openpyxl>=3.1
 anthropic>=0.40
+google-genai>=1.0
 python-dotenv>=1.0
+gunicorn>=22.0
+whitenoise>=6.7

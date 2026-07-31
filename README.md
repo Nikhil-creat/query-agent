@@ -81,7 +81,13 @@ python manage.py migrate
 python manage.py runserver  # http://localhost:8000
 ```
 
-Get an API key at https://console.anthropic.com.
+Get an API key at https://platform.claude.com (new accounts get a small free
+trial credit, no card required).
+
+**No card / prefer a permanently free option?** Set `LLM_PROVIDER=gemini` and
+`GEMINI_API_KEY=...` in `.env` instead (leave `ANTHROPIC_API_KEY` blank).
+Google AI Studio (https://aistudio.google.com) gives a free, no-credit-card
+API key with no expiry. Nothing else changes — same endpoints, same UI.
 
 **Frontend**
 
@@ -99,6 +105,27 @@ the UI is fully explorable with no setup at all.
 **Loading your own data:** `POST /api/datasets/upload` with a `file`
 field (CSV or XLSX) and an optional `name`. The response includes the
 `dataset_id` the frontend needs.
+
+## Deploying it
+
+**Backend → Render**
+1. Push this repo to GitHub.
+2. Render dashboard → New → Blueprint → point it at the repo (`render.yaml`
+   at the root configures the service) — or New → Web Service with root
+   directory `backend`, build command `pip install -r requirements.txt`,
+   start command from `backend/Procfile`.
+3. Set the `ANTHROPIC_API_KEY` env var (and `CORS_ALLOWED_ORIGINS` once you
+   have the Vercel URL from the next step).
+4. Note: SQLite on Render's free tier is ephemeral — it resets on every
+   redeploy. Fine for a portfolio demo; for anything persistent, swap in
+   Render's free Postgres and point `DATABASES` at it.
+
+**Frontend → Vercel**
+1. New Project → same GitHub repo → set root directory to `frontend`.
+2. Framework preset: Vite. Build command `npm run build`, output `dist`.
+3. Env var `VITE_API_BASE` = your Render URL (e.g. `https://data-chat-agent-backend.onrender.com`).
+4. Deploy, then go back to Render and set `CORS_ALLOWED_ORIGINS` to your
+   new Vercel URL so the two can actually talk to each other.
 
 ## Safety note
 
